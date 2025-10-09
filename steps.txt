@@ -1,6 +1,0 @@
--download da database
--configuração python
--configuração ambiente virtual
--instalação scipy 1.16.2
--instalação numpy 2.3.3
--instalação scikit-learn 1.5.2
