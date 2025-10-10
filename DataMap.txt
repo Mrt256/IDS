@@ -1,0 +1,50 @@
+UNSW-NB15/
+  -> UNSW_NB15_training-set.csv
+  -> UNSW_NB15_testing-set.csv
+  -> NUSW-NB15_features.csv
+  -> NUSW-NB15_GT.csv
+  -> The UNSW-NB15 description.pdf
+
+CIC-UNSWNB15/
+    ->CICFlowMeter_out.csv
+
+ISCXTor2016/
+  -> Scenario-A-merged_5s.csv
+  -> Scenario-B-merged_5s.csv
+
+CIC-IDS2017/
+    -> Thursday-WorkingHours-Afternoon-Infiltration.csv
+    -> Thursday-WorkingHours-Morning-WebAttacks.csv
+    -> Tuesday-WorkingHours.csv
+    -> Wednesday-workingHours.csv
+
+CIC-DDoS2019/
+  -> CSV-01-12/
+        DrDoS_DNS.csv
+        DrDoS_LDAP.csv
+        DrDoS_MSSQL.csv
+        DrDoS_NetBIOS.csv
+        DrDoS_NTP.csv
+        DrDoS_SNMP.csv
+        DrDoS_SSDP.csv
+        DrDoS_UDP.csv
+        Syn.csv
+        TFTP.csv
+        UDPLag.csv
+    -CSV-03-11/
+        LDAP.csv
+        MSSQL.csv
+        NetBIOS.csv
+        Portmap.csv
+        Syn.csv
+        UDP.csv
+        UDPLag.csv
+
+CICBellIDNS2021/
+  -> CSV_benign.csv
+  -> CSV_malware.csv
+  -> CSV_phishing.csv
+  -> CSV_spam.csv
+
+CICDarknet2020/
+  -> Darknet.csv
