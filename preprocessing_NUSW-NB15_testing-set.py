@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
-csv_path = "/DATASETS/UNSW-NB15/NUSW-NB15_GT.csv"
+csv_path = "DATASETS/UNSW-NB15/UNSW_NB15_testing-set.csv"
 df = pd.read_csv(csv_path)
 
 # normalize column names
@@ -42,8 +42,8 @@ for col in ['proto', 'service', 'state', 'attack_cat']:
 data_array = df.to_numpy(dtype=np.float32)
 
 
-X = df.drop(columns=["attack_category"]).to_numpy(dtype=np.float32)
-y = df["attack_category"].to_numpy(dtype=np.int32)
+y = df['label'].to_numpy(dtype=np.int32)
+X = df.drop(columns=['label']).to_numpy(dtype=np.float32)
 
 np.save("unsw_nb15_gt_features.npy", X)
 np.save("unsw_nb15_gt_labels.npy", y)
