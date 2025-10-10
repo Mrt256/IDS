@@ -45,8 +45,8 @@ data_array = df.to_numpy(dtype=np.float32)
 y = df['label'].to_numpy(dtype=np.int32)
 X = df.drop(columns=['label']).to_numpy(dtype=np.float32)
 
-np.save("unsw_nb15_gt_features.npy", X)
-np.save("unsw_nb15_gt_labels.npy", y)
+np.save("unsw_nb15_training_set_features.npy", X)
+np.save("unsw_nb15_training_set_labels.npy", y)
 
 print("Preprocessing ready!")
 print(f"Features shape: {X.shape}, Labels shape: {y.shape}")
