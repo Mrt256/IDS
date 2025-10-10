@@ -6,7 +6,7 @@ The ML model is trained to recognize complex attack patterns and distinguish nor
 
 ### Uses
 ### Technologies
-Python 3.11.9
-Scikit-learn 1.7.2
-Scipy 1.16.2
+- Python 3.11.9
+- Scikit-learn 1.7.2
+- Scipy 1.16.2
 ### Datasets
