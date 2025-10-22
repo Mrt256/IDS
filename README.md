@@ -10,4 +10,5 @@ The ML model is trained to recognize complex attack patterns and distinguish nor
 - Scikit-learn 1.7.2
 - Scipy 1.16.2
 - Pandas 2.3.3
+- XGBoost 3.1.1
 ### Datasets
