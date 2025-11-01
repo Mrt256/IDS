@@ -8,9 +8,6 @@ UNSW-NB15/
 CIC-UNSWNB15/
     ->CICFlowMeter_out.csv
 
-ISCXTor2016/
-  -> Scenario-A-merged_5s.csv
-  -> Scenario-B-merged_5s.csv
 
 CIC-IDS2017/
     -> Thursday-WorkingHours-Afternoon-Infiltration.csv
@@ -39,12 +36,3 @@ CIC-DDoS2019/
         Syn.csv
         UDP.csv
         UDPLag.csv
-
-CICBellIDNS2021/
-  -> CSV_benign.csv
-  -> CSV_malware.csv
-  -> CSV_phishing.csv
-  -> CSV_spam.csv
-
-CICDarknet2020/
-  -> Darknet.csv
