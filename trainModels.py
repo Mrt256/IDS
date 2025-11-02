@@ -29,3 +29,19 @@ Y_TEST_PATH  = os.path.join(BASE_DIR, "y_test.npy")
 MODEL_PATH   = os.path.join(BASE_DIR, "model_xgb_ids.pkl")
 METADATA_JSON = os.path.join(BASE_DIR, "model_xgb_ids_metadata.json")
 
+SEED = 42
+
+X_train = np.load(X_TRAIN_PATH)
+y_train = np.load(Y_TRAIN_PATH)
+X_val   = np.load(X_VAL_PATH)
+y_val   = np.load(Y_VAL_PATH)
+X_test  = np.load(X_TEST_PATH)
+y_test  = np.load(Y_TEST_PATH)
+
+X_train = X_train.astype(np.float32, copy=False)
+X_val   = X_val.astype(np.float32, copy=False)
+X_test  = X_test.astype(np.float32, copy=False)
+y_train = y_train.astype(np.int32,   copy=False)
+y_val   = y_val.astype(np.int32,     copy=False)
+y_test  = y_test.astype(np.int32,    copy=False)
+
