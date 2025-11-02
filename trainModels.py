@@ -47,7 +47,6 @@ y_test  = y_test.astype(np.int32,    copy=False)
 
 #------------- Print Distribution -------------
 
-# Show class distribution summary
 def distribution_sum(y, name):
     uniq, cnt = np.unique(y, return_counts=True)
     dist = {int(k): int(v) for k, v in zip(uniq, cnt)}
@@ -57,4 +56,12 @@ def distribution_sum(y, name):
 distribution_sum(y_train, "Train")
 distribution_sum(y_val,   "Validation")
 distribution_sum(y_test,  "Test")
-print()
+print("/n")
+
+#-----------  Imbalance Adjustment ----------- 
+#scale_pos_weight = neg / pos
+
+n_neg = (y_train == 0).sum()
+n_pos = (y_train == 1).sum()
+scale_pos_weight = float(n_neg) / max(float(n_pos), 1.0)
+print(f"scale_pos_weight: {scale_pos_weight:.3f}  (neg={n_neg:,} / pos={n_pos:,})\n")
