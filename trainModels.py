@@ -45,3 +45,14 @@ y_train = y_train.astype(np.int32,   copy=False)
 y_val   = y_val.astype(np.int32,     copy=False)
 y_test  = y_test.astype(np.int32,    copy=False)
 
+# Show class distribution summary
+def distribution_sum(y, name):
+    uniq, cnt = np.unique(y, return_counts=True)
+    dist = {int(k): int(v) for k, v in zip(uniq, cnt)}
+    total = int(y.shape[0])
+    print(f"📈 {name}: {dist} (total={total:,})")
+
+distribution_sum(y_train, "Train")
+distribution_sum(y_val,   "Validation")
+distribution_sum(y_test,  "Test")
+print()

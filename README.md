@@ -11,3 +11,24 @@ The ML model is trained to recognize complex attack patterns and distinguish nor
 - Scipy 1.16.2
 - XGBoost 3.1.1
 ### Datasets
+| Dataset  | Organization |Download Link |
+| :------------- |:-------------|:-------------|
+| DrDoS_DNS|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| DrDoS_LDAP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| DrDoS_MSSQL|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| DrDoS_NetBIOS|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| Portmap|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| DrDoS_NTP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| DrDoS_SNMP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| DrDoS_SSDP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| DrDoS_UDP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| Syn|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| TFTP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| UDPLag|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| LDAP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| MSSQL|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| NetBIOS| UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| UDP|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| CIC-IDS2017|UNIVERSITY OF BRUNSWICK|http://cicresearch.ca/|
+| UNSW_NB15_training-set|UNSW SYDNEY|https://research.unsw.edu.au/projects|
+| UNSW_NB15_testing-set|UNSW SYDNEY|https://research.unsw.edu.au/projects|
