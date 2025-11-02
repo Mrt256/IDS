@@ -65,3 +65,21 @@ n_neg = (y_train == 0).sum()
 n_pos = (y_train == 1).sum()
 scale_pos_weight = float(n_neg) / max(float(n_pos), 1.0)
 print(f"scale_pos_weight: {scale_pos_weight:.3f}  (neg={n_neg:,} / pos={n_pos:,})\n")
+
+#--------- Define and train the model ---------
+
+xgb = XGBClassifier(
+    n_estimators=1000, #maximum trees
+    max_depth=6, #depth of the trees
+    learning_rate=0.08, #boosting learning rate
+    subsample=0.8, # sampling
+    colsample_bytree=0.8,#sampling
+    reg_lambda=1.0, #regularization to prevent overfitting
+    reg_alpha=0.0, #regularization to prevent overfitting
+    random_state=SEED, # Set a fixed random seed
+    n_jobs=-1, #Set the number of cores
+    tree_method="gpu_hist", #Set the use of gpu instead cpu
+    scale_pos_weight=scale_pos_weight, #adjust the weight of the minority class
+    use_label_encoder=False, #Prevents XGBoost from using the internal label encode           
+    eval_metric="auc" #Area Under the ROC Curve (Receiver Operating Characteristic)                 
+)
