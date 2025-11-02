@@ -45,6 +45,8 @@ y_train = y_train.astype(np.int32,   copy=False)
 y_val   = y_val.astype(np.int32,     copy=False)
 y_test  = y_test.astype(np.int32,    copy=False)
 
+#------------- Print Distribution -------------
+
 # Show class distribution summary
 def distribution_sum(y, name):
     uniq, cnt = np.unique(y, return_counts=True)
