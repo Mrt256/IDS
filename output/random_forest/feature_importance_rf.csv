@@ -1,0 +1,11 @@
+Feature,Importance
+Fwd Packet Length Min,0.2173318958211179
+Total Backward Packets,0.16431348364895687
+Fwd Packet Length Mean,0.13492820598233654
+Total Length of Bwd Packets,0.10459434854858382
+Bwd Packet Length Std,0.09925047163012173
+Fwd Packet Length Max,0.08509982815269475
+Flow Duration,0.07899858973290066
+Total Length of Fwd Packets,0.04748875907409097
+Destination Port,0.04345800934272292
+Total Fwd Packets,0.02453640806647377
