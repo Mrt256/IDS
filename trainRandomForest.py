@@ -26,7 +26,7 @@ Y_VAL_PATH = os.path.join(BASE_DIR, "y_val.npy")
 X_TEST_PATH = os.path.join(BASE_DIR, "X_test.npy")
 Y_TEST_PATH = os.path.join(BASE_DIR, "y_test.npy")
 
-MODEL_PATH   = os.path.join(OUTPUT_DIR, "model_rf_ids.pkl")
+MODEL_PATH = os.path.join(OUTPUT_DIR, "model_rf_ids.pkl")
 METADATA_JSON = os.path.join(OUTPUT_DIR, "model_rf_ids_metadata.json")
 
 SEED = 42
