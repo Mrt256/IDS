@@ -170,7 +170,7 @@ prec, rec, thr = precision_recall_curve(y_val, val_prob)
 #Avoids division by zero and selects the threshold with the highest F1 score
 f1_scores = (2 * prec * rec) / np.clip(prec + rec, a_min=1e-12, a_max=None)
 best_idx = int(np.argmax(f1_scores))
-best_threshold = 0.4 if best_idx >= len(thr) else float(thr[best_idx])
+best_threshold = 0.39 if best_idx >= len(thr) else float(thr[best_idx])
 
 print(f"Best threshold (validation, max F1): {best_threshold:.6f}")
 print(f"F1(val)={f1_scores[best_idx]:.4f} | Prec(val)={prec[best_idx]:.4f} | Rec(val)={rec[best_idx]:.4f}\n")
