@@ -11,6 +11,7 @@ from sklearn.metrics import (
 from joblib import dump
 from datetime import datetime
 import platform
+from xgboost.callback import EarlyStopping
 
 #------------------- FILES -------------------
 
@@ -51,7 +52,7 @@ def distribution_sum(y, name):
     uniq, cnt = np.unique(y, return_counts=True)
     dist = {int(k): int(v) for k, v in zip(uniq, cnt)}
     total = int(y.shape[0])
-    print(f"📈 {name}: {dist} (total={total:,})")
+    print(f" {name}: {dist} (total={total:,})")
 
 distribution_sum(y_train,"Train")
 distribution_sum(y_val,"Validation")
@@ -78,7 +79,7 @@ xgb = XGBClassifier(
     reg_alpha=0.0, #regularization to prevent overfitting
     random_state=SEED, # Set a fixed random seed
     n_jobs=-1, #Set the number of cores
-    tree_method="gpu_hist", #Set the use of gpu instead cpu
+    tree_method="hist", #Set the use of cpu instead gpu
     scale_pos_weight=scale_pos_weight, #adjust the weight of the minority class
     use_label_encoder=False, #Prevents XGBoost from using the internal label encode           
     eval_metric="auc" #Area Under the ROC Curve (Receiver Operating Characteristic)                 
@@ -89,9 +90,9 @@ t0 = time.time()
 xgb.fit(
     X_train, y_train,
     eval_set=[(X_val, y_val)],
-    early_stopping_rounds=50,   #stops after 50 iterations without improvement in the metric
-    verbose=True               
+    verbose=True
 )
+
 
 train_time = time.time() - t0
 print(f"Train time: {train_time:.1f}s")
@@ -138,3 +139,73 @@ print("\nConfusion Matrix [TN FP; FN TP]:")
 print(cm)
 print("\nClassification Report:")
 print(classification_report(y_test, test_pred, digits=4, zero_division=0))
+
+#---------- Save model and metadata ----------
+
+dump(xgb, MODEL_PATH)
+
+metadata = {
+    "timestamp": datetime.now().isoformat(),
+    "paths": {
+        "base_dir": BASE_DIR,
+        "model_path": MODEL_PATH,
+        "metadata_json": METADATA_JSON,
+        "splits": {
+            "X_train": X_TRAIN_PATH, "y_train": Y_TRAIN_PATH,
+            "X_val": X_VAL_PATH, "y_val": Y_VAL_PATH,
+            "X_test": X_TEST_PATH, "y_test": Y_TEST_PATH
+        }
+    },
+    "env": {
+        "python": platform.python_version(),
+        "platform": platform.platform()
+    },
+    "data": {
+        "n_features": int(X_train.shape[1]),
+        "train_size": int(X_train.shape[0]),
+        "val_size": int(X_val.shape[0]),
+        "test_size": int(X_test.shape[0]),
+        "class_dist": {
+            "train": {int(k): int((y_train == k).sum()) for k in [0, 1]},
+            "val": {int(k): int((y_val == k).sum()) for k in [0, 1]},
+            "test": {int(k): int((y_test == k).sum()) for k in [0, 1]}
+        }
+    },
+    "model": {
+        "type": "XGBClassifier",
+        "params": {
+            "n_estimators": xgb.get_params().get("n_estimators"),
+            "max_depth": xgb.get_params().get("max_depth"),
+            "learning_rate": xgb.get_params().get("learning_rate"),
+            "subsample": xgb.get_params().get("subsample"),
+            "colsample_bytree": xgb.get_params().get("colsample_bytree"),
+            "reg_lambda": xgb.get_params().get("reg_lambda"),
+            "reg_alpha": xgb.get_params().get("reg_alpha"),
+            "tree_method": xgb.get_params().get("tree_method"),
+            "scale_pos_weight": scale_pos_weight,
+            "random_state": SEED,
+        },
+        "best_iteration": int(getattr(xgb, "best_iteration", -1)),
+        "best_threshold": best_threshold
+    },
+    "metrics_test": {
+        "accuracy": acc,
+        "precision": pre,
+        "recall": rec,
+        "f1": f1,
+        "auc_roc": auc,
+        "auc_pr": ap,
+        "confusion_matrix": {
+            "tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)
+        }
+    },
+    "training_time_seconds": train_time
+}
+
+with open(METADATA_JSON, "w", encoding="utf-8") as f:
+    json.dump(metadata, f, indent=2, ensure_ascii=False)
+
+print(f" Save model: {MODEL_PATH}")
+print(f" Save metadata: {METADATA_JSON}")
+
+print("\n*"*10,"training completed","*"*10)
