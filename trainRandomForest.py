@@ -12,7 +12,6 @@ from joblib import dump
 from datetime import datetime
 import platform
 from sklearn.model_selection import StratifiedKFold
-import matplotlib.pyplot as plt
 import pandas as pd
 
 #------------------- FILES -------------------
@@ -182,13 +181,6 @@ feat_names = ["Destination Port", "Flow Duration", "Total Fwd Packets",
               "Fwd Packet Length Min", "Fwd Packet Length Mean", "Bwd Packet Length Std"]
 imp_df = pd.DataFrame({"Feature": feat_names, "Importance": importance}).sort_values(by="Importance", ascending=False)
 imp_df.to_csv(os.path.join(OUTPUT_DIR, "feature_importance_rf.csv"), index=False)
-
-plt.figure(figsize=(10,6))
-plt.barh(imp_df["Feature"][:15], imp_df["Importance"][:15])
-plt.gca().invert_yaxis()
-plt.title("Feature Importances (Random Forest)")
-plt.tight_layout()
-plt.show()
 
 # ---------- Save model and metadata ----------
 
