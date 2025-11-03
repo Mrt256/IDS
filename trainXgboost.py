@@ -21,6 +21,7 @@ import pandas as pd
 
 # Bring path numpy 
 BASE_DIR = r"numpy"
+OUTPUT_DIR = r"output/xgboost"
 
 #Bring files
 X_TRAIN_PATH = os.path.join(BASE_DIR, "X_train.npy")
@@ -31,8 +32,8 @@ X_TEST_PATH = os.path.join(BASE_DIR, "X_test.npy")
 Y_TEST_PATH = os.path.join(BASE_DIR, "y_test.npy")
 
 #Result files
-MODEL_PATH   = os.path.join(BASE_DIR, "model_xgb_ids.pkl")
-METADATA_JSON = os.path.join(BASE_DIR, "model_xgb_ids_metadata.json")
+MODEL_PATH   = os.path.join(OUTPUT_DIR, "model_xgb_ids.pkl")
+METADATA_JSON = os.path.join(OUTPUT_DIR, "model_xgb_ids_metadata.json")
 
 SEED = 42
 N_SPLITS = 5
@@ -221,7 +222,7 @@ feat_names = ["Destination Port", "Flow Duration", "Total Fwd Packets",
               "Fwd Packet Length Min", "Fwd Packet Length Mean", "Bwd Packet Length Std"]
 imp_df = pd.DataFrame({"Feature": feat_names, "Importance": importance}).sort_values(by="Importance", ascending=False)
 
-imp_df.to_csv(os.path.join(BASE_DIR, "feature_importance.csv"), index=False)
+imp_df.to_csv(os.path.join(OUTPUT_DIR, "feature_importance.csv"), index=False)
 
 plt.figure(figsize=(10,6))
 plt.barh(imp_df["Feature"][:15], imp_df["Importance"][:15])
