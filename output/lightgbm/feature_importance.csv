@@ -1,0 +1,11 @@
+Feature,Importance
+Flow Duration,9098
+Destination Port,5877
+Total Length of Fwd Packets,5460
+Fwd Packet Length Mean,4986
+Total Fwd Packets,4270
+Total Length of Bwd Packets,3527
+Bwd Packet Length Std,3242
+Total Backward Packets,3152
+Fwd Packet Length Max,2624
+Fwd Packet Length Min,1778
