@@ -2,6 +2,7 @@ import os
 import json
 import time
 import numpy as np
+import xgboost
 from xgboost import XGBClassifier
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
@@ -73,14 +74,17 @@ print(f"scale_pos_weight: {scale_pos_weight:.3f}  (neg={n_neg:,} / pos={n_pos:,}
 
 #--------- Define and train the model ---------
 
+## -- Training with K-Fold Cross-Validation --
 
-kf = StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=SEED)
+kf = StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=SEED) #Divide the data into 5 SPLITS parts
 
 fold_metrics = []
 
+# Loop over each fold
 for fold, (train_idx, val_idx) in enumerate(kf.split(X_train, y_train), 1):
     print(f"\nFold {fold}/{N_SPLITS}")
     
+    # Split data into training and validation sets
     X_tr, X_val_fold = X_train[train_idx], X_train[val_idx]
     y_tr, y_val_fold = y_train[train_idx], y_train[val_idx]
 
@@ -97,39 +101,44 @@ for fold, (train_idx, val_idx) in enumerate(kf.split(X_train, y_train), 1):
         tree_method="hist", #Set the use of cpu instead gpu
         scale_pos_weight=scale_pos_weight, #adjust the weight of the minority class          
         eval_metric="auc", #Area Under the ROC Curve (Receiver Operating Characteristic)
-
-        importance_type="gain"
+        importance_type="gain" #Feature importance based on the average gain
     )
 
+    # Train the model and measure training time
     t0 = time.time()
     xgb.fit(X_tr, y_tr, eval_set=[(X_val_fold, y_val_fold)], verbose=False)
     train_time = time.time() - t0
 
+    # Predictions and probabilities on folder
     y_pred_fold = xgb.predict(X_val_fold)
     y_prob_fold = xgb.predict_proba(X_val_fold)[:, 1]
 
+    # Calculate metrics
     acc = accuracy_score(y_val_fold, y_pred_fold)
     pre = precision_score(y_val_fold, y_pred_fold, zero_division=0)
     rec = recall_score(y_val_fold, y_pred_fold, zero_division=0)
     f1 = f1_score(y_val_fold, y_pred_fold, zero_division=0)
     auc = roc_auc_score(y_val_fold, y_prob_fold)
 
+    # Store metrics for the fold
     fold_metrics.append({
         "fold": fold, "acc": acc, "prec": pre, "rec": rec, "f1": f1, "auc": auc, "train_time": train_time
     })
 
     print(f"Fold {fold} — Acc={acc:.4f}, F1={f1:.4f}, AUC={auc:.4f}, Time={train_time:.1f}s")
 
-
+# Show training time for the last fold
 train_time = time.time() - t0
 print(f"Train time: {train_time:.1f}s")
 
+# Show used trees
 best_iter = getattr(xgb, "best_iteration", None)
 if best_iter is not None:
     print(f"Used trees (best_iteration): {best_iter + 1}\n")
 else:
     print(f"Used trees: {xgb.get_params().get('n_estimators')} (no early stopping)\n")
 
+##----------- Final training model -----------
 final_xgb = XGBClassifier(
     n_estimators=1500,
     max_depth=6,
@@ -142,9 +151,10 @@ final_xgb = XGBClassifier(
     n_jobs=-1,
     tree_method="hist",
     scale_pos_weight=scale_pos_weight,
-    eval_metric="aucpr"
+    eval_metric="aucpr" # optimized for Area Under the Precision-Recall Curve
 )
 
+# Train the final model on the entire training set
 t0 = time.time()
 final_xgb.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
 final_train_time = time.time() - t0
@@ -170,6 +180,7 @@ print(f"F1(val)={f1_scores[best_idx]:.4f} | Prec(val)={prec[best_idx]:.4f} | Rec
 test_prob = final_xgb.predict_proba(X_test)[:, 1]
 test_pred = (test_prob >= best_threshold).astype(int)
 
+#Calculate main metrics
 acc = accuracy_score(y_test, test_pred)
 pre = precision_score(y_test, test_pred, zero_division=0)
 rec = recall_score(y_test, test_pred, zero_division=0)
@@ -177,6 +188,7 @@ f1 = f1_score(y_test, test_pred, zero_division=0)
 auc = roc_auc_score(y_test, test_prob)
 ap = average_precision_score(y_test, test_prob)  # AUC-PR
 
+#Confusion Matrix and detailed values
 cm = confusion_matrix(y_test, test_pred)
 tn, fp, fn, tp = cm.ravel()
 
@@ -192,6 +204,7 @@ print(cm)
 print("\nClassification Report:")
 print(classification_report(y_test, test_pred, digits=4, zero_division=0))
 
+# ---------- K-Fold Summary ----------
 print("\nK-Fold:")
 mean_acc = np.mean([m["acc"] for m in fold_metrics])
 mean_f1 = np.mean([m["f1"] for m in fold_metrics])
@@ -219,8 +232,10 @@ plt.show()
 
 #---------- Save model and metadata ----------
 
+# Save the trained model
 dump(final_xgb, MODEL_PATH)
 
+# Metadata dictionary
 metadata = {
     "timestamp": datetime.now().isoformat(),
     "paths": {
@@ -233,11 +248,15 @@ metadata = {
             "X_test": X_TEST_PATH, "y_test": Y_TEST_PATH
         }
     },
-    "env": {
+    "env": { # environment details
+        "xgboost_version": xgboost.__version__,
+        "xgboost_params": final_xgb.get_params(),
+        "sklearn_version": pd.__version__,
         "python": platform.python_version(),
-        "platform": platform.platform()
+        "platform": platform.platform(),
+        "machine": platform.machine()
     },
-    "data": {
+    "data": { # dataset details
         "n_features": int(X_train.shape[1]),
         "train_size": int(X_train.shape[0]),
         "val_size": int(X_val.shape[0]),
@@ -248,7 +267,7 @@ metadata = {
             "test": {int(k): int((y_test == k).sum()) for k in [0, 1]}
         }
     },
-    "model": {
+    "model": { # model details
         "type": "XGBClassifier",
     "params": {
         "n_estimators": final_xgb.get_params().get("n_estimators"),
@@ -265,7 +284,7 @@ metadata = {
         "best_iteration": int(getattr(final_xgb, "best_iteration", -1)),
         "best_threshold": best_threshold
     },
-    "metrics_test": {
+    "metrics_test": { # final test metrics
         "accuracy": acc,
         "precision": pre,
         "recall": rec,
@@ -278,6 +297,8 @@ metadata = {
     },
     "training_time_seconds": final_train_time
 }
+
+# Add K-Fold results to metadata
 metadata["kfold_results"] = fold_metrics
 metadata["kfold_mean"] = {
     "accuracy": float(mean_acc),
@@ -285,9 +306,12 @@ metadata["kfold_mean"] = {
     "auc": float(mean_auc)
 }
 
+# Save metadata to JSON file
 with open(METADATA_JSON, "w", encoding="utf-8") as f:
     json.dump(metadata, f, indent=2, ensure_ascii=False)
 
+
+# Final messages
 print(f" Save model: {MODEL_PATH}")
 print(f" Save metadata: {METADATA_JSON}")
 
