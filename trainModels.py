@@ -96,7 +96,12 @@ xgb.fit(
 
 train_time = time.time() - t0
 print(f"Train time: {train_time:.1f}s")
-print(f"Used trees (best_iteration): {xgb.best_iteration + 1 if xgb.best_iteration is not None else 'n/a'}\n")
+
+best_iter = getattr(xgb, "best_iteration", None)
+if best_iter is not None:
+    print(f"Used trees (best_iteration): {best_iter + 1}\n")
+else:
+    print(f"Used trees: {xgb.get_params().get('n_estimators')} (no early stopping)\n")
 
 #--------- Choose the best threshold ---------
 
@@ -208,4 +213,4 @@ with open(METADATA_JSON, "w", encoding="utf-8") as f:
 print(f" Save model: {MODEL_PATH}")
 print(f" Save metadata: {METADATA_JSON}")
 
-print("\n*"*10,"training completed","*"*10)
+print("\n","*"*10,"training completed","*"*10)
