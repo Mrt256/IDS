@@ -11,7 +11,10 @@ from sklearn.metrics import (
 from joblib import dump
 from datetime import datetime
 import platform
-from xgboost.callback import EarlyStopping
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import make_scorer
+import matplotlib.pyplot as plt
+import pandas as pd
 
 #------------------- FILES -------------------
 
@@ -31,6 +34,7 @@ MODEL_PATH   = os.path.join(BASE_DIR, "model_xgb_ids.pkl")
 METADATA_JSON = os.path.join(BASE_DIR, "model_xgb_ids_metadata.json")
 
 SEED = 42
+N_SPLITS = 5
 
 X_train = np.load(X_TRAIN_PATH)
 y_train = np.load(Y_TRAIN_PATH)
@@ -69,29 +73,52 @@ print(f"scale_pos_weight: {scale_pos_weight:.3f}  (neg={n_neg:,} / pos={n_pos:,}
 
 #--------- Define and train the model ---------
 
-xgb = XGBClassifier(
-    n_estimators=1000, #maximum trees
-    max_depth=6, #depth of the trees
-    learning_rate=0.08, #boosting learning rate
-    subsample=0.8, # sampling
-    colsample_bytree=0.8,#sampling
-    reg_lambda=1.0, #regularization to prevent overfitting
-    reg_alpha=0.0, #regularization to prevent overfitting
-    random_state=SEED, # Set a fixed random seed
-    n_jobs=-1, #Set the number of cores
-    tree_method="hist", #Set the use of cpu instead gpu
-    scale_pos_weight=scale_pos_weight, #adjust the weight of the minority class
-    use_label_encoder=False, #Prevents XGBoost from using the internal label encode           
-    eval_metric="auc" #Area Under the ROC Curve (Receiver Operating Characteristic)                 
-)
 
-t0 = time.time()
+kf = StratifiedKFold(n_splits=N_SPLITS, shuffle=True, random_state=SEED)
 
-xgb.fit(
-    X_train, y_train,
-    eval_set=[(X_val, y_val)],
-    verbose=True
-)
+fold_metrics = []
+
+for fold, (train_idx, val_idx) in enumerate(kf.split(X_train, y_train), 1):
+    print(f"\nFold {fold}/{N_SPLITS}")
+    
+    X_tr, X_val_fold = X_train[train_idx], X_train[val_idx]
+    y_tr, y_val_fold = y_train[train_idx], y_train[val_idx]
+
+    xgb = XGBClassifier(
+        n_estimators=1500, #maximum trees
+        max_depth=6, #depth of the trees
+        learning_rate=0.08, #boosting learning rate
+        subsample=0.8, # sampling
+        colsample_bytree=0.8,#sampling
+        reg_lambda=2.0, #regularization to prevent overfitting
+        reg_alpha=0.0, #regularization to prevent overfitting
+        random_state=SEED, # Set a fixed random seed
+        n_jobs=-1, #Set the number of cores
+        tree_method="hist", #Set the use of cpu instead gpu
+        scale_pos_weight=scale_pos_weight, #adjust the weight of the minority class          
+        eval_metric="auc", #Area Under the ROC Curve (Receiver Operating Characteristic)
+
+        importance_type="gain"
+    )
+
+    t0 = time.time()
+    xgb.fit(X_tr, y_tr, eval_set=[(X_val_fold, y_val_fold)], verbose=False)
+    train_time = time.time() - t0
+
+    y_pred_fold = xgb.predict(X_val_fold)
+    y_prob_fold = xgb.predict_proba(X_val_fold)[:, 1]
+
+    acc = accuracy_score(y_val_fold, y_pred_fold)
+    pre = precision_score(y_val_fold, y_pred_fold, zero_division=0)
+    rec = recall_score(y_val_fold, y_pred_fold, zero_division=0)
+    f1 = f1_score(y_val_fold, y_pred_fold, zero_division=0)
+    auc = roc_auc_score(y_val_fold, y_prob_fold)
+
+    fold_metrics.append({
+        "fold": fold, "acc": acc, "prec": pre, "rec": rec, "f1": f1, "auc": auc, "train_time": train_time
+    })
+
+    print(f"Fold {fold} — Acc={acc:.4f}, F1={f1:.4f}, AUC={auc:.4f}, Time={train_time:.1f}s")
 
 
 train_time = time.time() - t0
@@ -103,9 +130,29 @@ if best_iter is not None:
 else:
     print(f"Used trees: {xgb.get_params().get('n_estimators')} (no early stopping)\n")
 
+final_xgb = XGBClassifier(
+    n_estimators=1500,
+    max_depth=6,
+    learning_rate=0.08,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    reg_lambda=2.0,
+    reg_alpha=0.0,
+    random_state=SEED,
+    n_jobs=-1,
+    tree_method="hist",
+    scale_pos_weight=scale_pos_weight,
+    eval_metric="aucpr"
+)
+
+t0 = time.time()
+final_xgb.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+final_train_time = time.time() - t0
+print(f"\nFinal model train time: {final_train_time:.1f}s")
+
 #--------- Choose the best threshold ---------
 
-val_prob = xgb.predict_proba(X_val)[:, 1]
+val_prob = final_xgb.predict_proba(X_val)[:, 1]
 
 #Sweep possible thresholds from the Precision-Recall curve
 prec, rec, thr = precision_recall_curve(y_val, val_prob)
@@ -113,22 +160,22 @@ prec, rec, thr = precision_recall_curve(y_val, val_prob)
 #Avoids division by zero and selects the threshold with the highest F1 score
 f1_scores = (2 * prec * rec) / np.clip(prec + rec, a_min=1e-12, a_max=None)
 best_idx = int(np.argmax(f1_scores))
-best_threshold = 0.5 if best_idx >= len(thr) else float(thr[best_idx])
+best_threshold = 0.4 if best_idx >= len(thr) else float(thr[best_idx])
 
 print(f"Best threshold (validation, max F1): {best_threshold:.6f}")
 print(f"F1(val)={f1_scores[best_idx]:.4f} | Prec(val)={prec[best_idx]:.4f} | Rec(val)={rec[best_idx]:.4f}\n")
 
 # --------- Evaluate on the test set ---------
 
-test_prob = xgb.predict_proba(X_test)[:, 1]
+test_prob = final_xgb.predict_proba(X_test)[:, 1]
 test_pred = (test_prob >= best_threshold).astype(int)
 
 acc = accuracy_score(y_test, test_pred)
 pre = precision_score(y_test, test_pred, zero_division=0)
 rec = recall_score(y_test, test_pred, zero_division=0)
-f1  = f1_score(y_test, test_pred, zero_division=0)
+f1 = f1_score(y_test, test_pred, zero_division=0)
 auc = roc_auc_score(y_test, test_prob)
-ap  = average_precision_score(y_test, test_prob)  # AUC-PR
+ap = average_precision_score(y_test, test_prob)  # AUC-PR
 
 cm = confusion_matrix(y_test, test_pred)
 tn, fp, fn, tp = cm.ravel()
@@ -145,9 +192,34 @@ print(cm)
 print("\nClassification Report:")
 print(classification_report(y_test, test_pred, digits=4, zero_division=0))
 
+print("\nK-Fold:")
+mean_acc = np.mean([m["acc"] for m in fold_metrics])
+mean_f1 = np.mean([m["f1"] for m in fold_metrics])
+mean_auc = np.mean([m["auc"] for m in fold_metrics])
+print(f"average accuracy: {mean_acc:.4f}")
+print(f"average F1-score: {mean_f1:.4f}")
+print(f"average AUC: {mean_auc:.4f}")
+
+# ---------- Feature Importance ----------
+importance = final_xgb.feature_importances_
+feat_names = ["Destination Port", "Flow Duration", "Total Fwd Packets",
+              "Total Backward Packets",	"Total Length of Fwd Packets",	
+              "Total Length of Bwd Packets", "Fwd Packet Length Max",	
+              "Fwd Packet Length Min", "Fwd Packet Length Mean", "Bwd Packet Length Std"]
+imp_df = pd.DataFrame({"Feature": feat_names, "Importance": importance}).sort_values(by="Importance", ascending=False)
+
+imp_df.to_csv(os.path.join(BASE_DIR, "feature_importance.csv"), index=False)
+
+plt.figure(figsize=(10,6))
+plt.barh(imp_df["Feature"][:15], imp_df["Importance"][:15])
+plt.gca().invert_yaxis()
+plt.title("Feature Importances (XGBoost)")
+plt.tight_layout()
+plt.show()
+
 #---------- Save model and metadata ----------
 
-dump(xgb, MODEL_PATH)
+dump(final_xgb, MODEL_PATH)
 
 metadata = {
     "timestamp": datetime.now().isoformat(),
@@ -178,19 +250,19 @@ metadata = {
     },
     "model": {
         "type": "XGBClassifier",
-        "params": {
-            "n_estimators": xgb.get_params().get("n_estimators"),
-            "max_depth": xgb.get_params().get("max_depth"),
-            "learning_rate": xgb.get_params().get("learning_rate"),
-            "subsample": xgb.get_params().get("subsample"),
-            "colsample_bytree": xgb.get_params().get("colsample_bytree"),
-            "reg_lambda": xgb.get_params().get("reg_lambda"),
-            "reg_alpha": xgb.get_params().get("reg_alpha"),
-            "tree_method": xgb.get_params().get("tree_method"),
-            "scale_pos_weight": scale_pos_weight,
-            "random_state": SEED,
-        },
-        "best_iteration": int(getattr(xgb, "best_iteration", -1)),
+    "params": {
+        "n_estimators": final_xgb.get_params().get("n_estimators"),
+        "max_depth": final_xgb.get_params().get("max_depth"),
+        "learning_rate": final_xgb.get_params().get("learning_rate"),
+        "subsample": final_xgb.get_params().get("subsample"),
+        "colsample_bytree": final_xgb.get_params().get("colsample_bytree"),
+        "reg_lambda": final_xgb.get_params().get("reg_lambda"),
+        "reg_alpha": final_xgb.get_params().get("reg_alpha"),
+        "tree_method": final_xgb.get_params().get("tree_method"),
+        "scale_pos_weight": scale_pos_weight,
+        "random_state": SEED,
+    },
+        "best_iteration": int(getattr(final_xgb, "best_iteration", -1)),
         "best_threshold": best_threshold
     },
     "metrics_test": {
@@ -204,7 +276,13 @@ metadata = {
             "tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)
         }
     },
-    "training_time_seconds": train_time
+    "training_time_seconds": final_train_time
+}
+metadata["kfold_results"] = fold_metrics
+metadata["kfold_mean"] = {
+    "accuracy": float(mean_acc),
+    "f1": float(mean_f1),
+    "auc": float(mean_auc)
 }
 
 with open(METADATA_JSON, "w", encoding="utf-8") as f:
