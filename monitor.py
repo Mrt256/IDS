@@ -4,8 +4,8 @@ import json
 from joblib import load
 import numpy as np
 from winotify import Notification, audio
-import sys
 import ctypes
+from datetime import datetime
 
 try:
     app_id = "IDS_RealTime_App"
@@ -13,7 +13,7 @@ try:
 except Exception as e:
     print(f"[WARN] {e}")
 
-LOG_PATH = "logs/ids_log.csv"
+LOG_PATH = os.path.join("logs",f"ids_log_{datetime.now().strftime('%Y-%m-%d')}.csv")
 MODEL_PATH = "output/xgboost/model_xgb_ids.pkl"
 script_path = os.path.abspath("logs/fp_register.py")
 temp_path = os.path.abspath("logs/temp.json")
