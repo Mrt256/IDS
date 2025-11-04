@@ -3,10 +3,13 @@ import pyshark
 import time
 import numpy as np
 import pandas as pd
+from joblib import load
+
 
 INTERFACE = 'Wi-Fi'   # Ethernet, Wi-Fi, Local Area Connection
 FLOW_TIMEOUT = 5       # seconds withou packages
 BATCH_INTERVAL = 2     # time until save/send
+MODEL_PATH = r"output\xgboost\model_xgb_ids.pkl"
 
 flows = {}  # dicionary
 last_flush = time.time()
@@ -94,6 +97,7 @@ def flush_expired_flows():
 def main():
     print(f"Starting capture on interface: {INTERFACE} (timeout={FLOW_TIMEOUT}s)...")
     capture = pyshark.LiveCapture(interface=INTERFACE)
+    model = load(MODEL_PATH)
 
     global last_flush
 
@@ -108,7 +112,16 @@ def main():
                     print(f"\n{len(df)} final flow")
                     print(df.head(3))
                     X = preprocess(df)
-                    print(X)
+
+                    #---- Prediction ----
+                    pred = model.predict(X)
+                    prob = model.predict_proba(X)[:, 1]  
+
+                    for i in range(len(pred)):
+                        if pred[i] == 1:
+                            print(f"Flow {i} attack detected (prob={prob[i]:.3f})")
+                        else:
+                            print(f"Flow {i} Normal (prob={prob[i]:.3f})")
 
     except KeyboardInterrupt:
         print("\nCapture finished by user.")
