@@ -110,8 +110,6 @@ def main():
                 finished = flush_expired_flows()
                 if finished:
                     df = pd.DataFrame(finished)
-                    print(f"\n{len(df)} final flow")
-                    print(df.head(3))
                     X = preprocess(df)
 
                     #---- Prediction ----
@@ -128,7 +126,7 @@ def main():
                         log_result(flow_features)
 
     except KeyboardInterrupt:
-        print("\nCapture finished by user.")
+        print("\nCapture finished by user")
         finished = flush_expired_flows()
         if finished:
             df = pd.DataFrame(finished)
