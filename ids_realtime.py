@@ -38,6 +38,10 @@ def update_flow(pkt):
             "start_time": now,
             "end_time": now,
             "fwd_lengths": [],
+            "bwd_lengths": [],
+            "proto": key[4],
+            "dport": key[3],
+            "last_update": now
     }
 
     flow = flows[key]
