@@ -18,9 +18,10 @@ import pandas as pd
 
 #------------------- FILES -------------------
 
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Bring path numpy 
-BASE_DIR = r"numpy"
-OUTPUT_DIR = r"output/xgboost"
+BASE_DIR = os.path.join(BASE_PATH, "numpy")
+OUTPUT_DIR = os.path.join(BASE_PATH, "output", "xgboost")
 
 #Bring files
 X_TRAIN_PATH = os.path.join(BASE_DIR, "X_train.npy")
