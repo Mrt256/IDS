@@ -50,6 +50,12 @@ def update_flow(pkt):
         flow["bwd_lengths"].append(length)
 
 def flow_to_features(key, flow):
+
+    if "fwd_lengths" not in flow:# handle missing keys
+        flow["fwd_lengths"] = []
+    if "bwd_lengths" not in flow:
+        flow["bwd_lengths"] = []
+
     duration = (flow["end_time"] - flow["start_time"]) * 1e6  # microseconds
     fwd = np.array(flow["fwd_lengths"])
     bwd = np.array(flow["bwd_lengths"])
@@ -98,6 +104,7 @@ def main():
                     print(f"\n{len(df)} final flow")
                     print(df.head(3))
                     X = preprocess(df)
+                    print(X)
 
     except KeyboardInterrupt:
         print("\nCapture finished by user.")
