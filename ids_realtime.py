@@ -114,9 +114,11 @@ def main():
                     X = preprocess(df)
 
                     #---- Prediction ----
-                    pred = model.predict(X)
-                    prob = model.predict_proba(X)[:, 1]  
+                    THRESHOLD = 0.95
 
+                    prob = model.predict_proba(X)[:, 1]  
+                    pred = (prob >= THRESHOLD).astype(int)
+                    
                     for i in range(len(pred)):
                         if pred[i] == 1:
                             print(f"Flow {i} attack detected (prob={prob[i]:.3f})")
