@@ -1,4 +1,5 @@
 from preprocess import preprocess
+from monitor import log_result
 import pyshark
 import time
 import numpy as np
@@ -114,16 +115,17 @@ def main():
                     X = preprocess(df)
 
                     #---- Prediction ----
-                    THRESHOLD = 0.95
+                    THRESHOLD = 0.9873
 
                     prob = model.predict_proba(X)[:, 1]  
                     pred = (prob >= THRESHOLD).astype(int)
                     
-                    for i in range(len(pred)):
-                        if pred[i] == 1:
-                            print(f"Flow {i} attack detected (prob={prob[i]:.3f})")
-                        else:
-                            print(f"Flow {i} Normal (prob={prob[i]:.3f})")
+                    #---- Call monitor.py ----
+
+                    for i in range(len(prob)):
+                        flow_features = df.iloc[i].to_dict()
+                        flow_features["Label"] = int(pred[i])
+                        log_result(flow_features)
 
     except KeyboardInterrupt:
         print("\nCapture finished by user.")
