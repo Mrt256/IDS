@@ -1,3 +1,4 @@
+from preprocess import preprocess
 import pyshark
 import time
 import numpy as np
@@ -96,7 +97,7 @@ def main():
                     df = pd.DataFrame(finished)
                     print(f"\n{len(df)} final flow")
                     print(df.head(3))
-                    # call preprocess.py
+                    X = preprocess(df)
 
     except KeyboardInterrupt:
         print("\nCapture finished by user.")
