@@ -130,8 +130,6 @@ def main():
         finished = flush_expired_flows()
         if finished:
             df = pd.DataFrame(finished)
-            print(f"\n{len(df)} fial flow")
-            print(df.head(3))
 
 if __name__ == "__main__":
     main()
