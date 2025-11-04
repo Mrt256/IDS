@@ -65,7 +65,7 @@ def flow_to_features(key, flow):
     bwd = np.array(flow["bwd_lengths"])
 
     return {
-        "Destination Port": int(flow["dport"]),
+        "Destination Port": int(flow.get("dport", 0)),
         "Flow Duration": duration,
         "Total Fwd Packets": len(fwd),
         "Total Backward Packets": len(bwd),
